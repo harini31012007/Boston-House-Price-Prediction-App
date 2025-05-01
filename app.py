@@ -1,136 +1,100 @@
+# app.py
+
 import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import pickle
 
-# Set page config
-st.set_page_config(page_title="House Price Predictor", layout="wide")
+# Title and Description
+st.set_page_config(page_title="🏠 Boston House Price Predictor", layout="centered")
+st.title("🏠 Boston House Price Forecasting App")
+st.markdown("Fill in the feature values below to **predict the median value of owner-occupied homes (in $1000s)** using advanced regression techniques.")
 
 # Sidebar
-st.sidebar.title("🔎 Navigation")
-section = st.sidebar.radio("Go to", ["Introduction", "Data Exploration", "Model Training", "Predict Price"])
+st.sidebar.header("🔧 Input Features")
 
-# Load dataset
-@st.cache_data
-def load_data():
-    url = 'https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv'
-    return pd.read_csv(url)
+# Feature Inputs with Default Test Values (labels and placeholders)
+crim = st.sidebar.number_input("1. CRIM - Per capita crime rate by town", 0.0, 100.0, 5.31)
+zn = st.sidebar.number_input("2. ZN - % of residential land zoned for large lots", 0.0, 100.0, 11.36)
+indus = st.sidebar.number_input("3. INDUS - % of non-retail business acres per town", 0.0, 30.0, 11.14)
+chas = st.sidebar.selectbox("4. CHAS - Tract bounds river?", [0, 1], index=0)
+nox = st.sidebar.number_input("5. NOX - Nitric oxides concentration (ppm)", 0.0, 1.0, 0.55)
+rm = st.sidebar.number_input("6. RM - Average number of rooms per dwelling", 3.0, 9.0, 6.28)
+age = st.sidebar.number_input("7. AGE - % of owner-occupied units built before 1940", 0.0, 100.0, 68.57)
+dis = st.sidebar.number_input("8. DIS - Distances to employment centers", 1.0, 12.0, 3.80)
+rad = st.sidebar.number_input("9. RAD - Accessibility to radial highways", 1.0, 24.0, 9.55)
+tax = st.sidebar.number_input("10. TAX - Property-tax rate per $10,000", 100.0, 800.0, 408.24)
+ptratio = st.sidebar.number_input("11. PTRATIO - Pupil-teacher ratio", 10.0, 30.0, 30.00)
+b = st.sidebar.number_input("12. B - 1000(Bk - 0.63)^2", 0.0, 400.0, 353.87)
+lstat = st.sidebar.number_input("13. LSTAT - % lower status of the population", 1.0, 40.0, 12.0)
 
-df = load_data()
+# Preprocessing and Prediction
+input_data = pd.DataFrame({
+    'crim': [crim],
+    'zn': [zn],
+    'indus': [indus],
+    'chas': [chas],
+    'nox': [nox],
+    'rm': [rm],
+    'age': [age],
+    'dis': [dis],
+    'rad': [rad],
+    'tax': [tax],
+    'ptratio': [ptratio],
+    'b': [b],
+    'lstat': [lstat]
+})
 
-# Standard scaler
-scaler = StandardScaler()
-X = df.drop('medv', axis=1)
-y = df['medv']
-X_scaled = scaler.fit_transform(X)
+# Feature Engineering
+input_data['rm_per_age'] = input_data['rm'] / input_data['age']
+input_data['dis_per_rad'] = input_data['dis'] / input_data['rad']
+input_data['tax_ptratio_ratio'] = input_data['tax'] / input_data['ptratio']
 
-# Split
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+poly = PolynomialFeatures(degree=2, include_bias=False)
+poly_features = poly.fit_transform(input_data[['lstat', 'rm']])
+poly_df = pd.DataFrame(poly_features, columns=poly.get_feature_names_out(['lstat', 'rm']))
+input_data['lstat^2'] = poly_df['lstat^2']
+input_data['rm^2'] = poly_df['rm^2']
+input_data['lstat rm'] = poly_df['lstat rm']
 
-# Models
-models = {
-    "Linear Regression": LinearRegression(),
-    "Ridge Regression": Ridge(),
-    "Lasso Regression": Lasso(),
-    "Random Forest": RandomForestRegressor(n_estimators=100),
-    "XGBoost": XGBRegressor(n_estimators=100, learning_rate=0.1)
-}
+# Age binning
+input_data['age_binned_Mid-aged'] = int(35 < age <= 70)
+input_data['age_binned_Old'] = int(age > 70)
 
-# Introduction
-if section == "Introduction":
-    st.title("Boston House Price Prediction App")
-    st.markdown("""
-    Welcome! This app helps predict Boston house prices using smart regression techniques.
-    
-    Models used:
-    - Linear Regression
-    - Ridge & Lasso Regression
-    - Random Forest
-    - XGBoost
-    
-     You can explore data, train models, and predict your own house prices using this app.
-    """)
+# Final feature set (same as training)
+final_features = [
+    'crim', 'zn', 'indus', 'chas', 'nox', 'rm', 'age', 'dis',
+    'rad', 'tax', 'ptratio', 'b', 'lstat',
+    'rm_per_age', 'dis_per_rad', 'tax_ptratio_ratio',
+    'lstat^2', 'rm^2', 'lstat rm',
+    'age_binned_Mid-aged', 'age_binned_Old'
+]
 
-    st.image("https://miro.medium.com/v2/resize:fit:1400/format:webp/1*RBPVDn3S1sauz1MyoN7Hug.jpeg", use_column_width=True)
+X_input = input_data[final_features]
 
-# Data Exploration
-elif section == "Data Exploration":
-    st.title("Exploratory Data Analysis")
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+# Load scaler and model
+@st.cache_resource
+def load_model():
+    # Load the scaler and model (must be saved beforehand)
+    scaler = pickle.load(open("scaler.pkl", "rb"))
+    model = pickle.load(open("final_model.pkl", "rb"))
+    return scaler, model
 
-    st.subheader("Correlation Matrix")
-    fig, ax = plt.subplots(figsize=(12, 10))
-    sns.heatmap(df.corr(), annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
-    st.pyplot(fig)
+scaler, model = load_model()
+X_scaled = scaler.transform(X_input)
 
-    st.subheader("Distribution of Target Variable (medv)")
-    fig2, ax2 = plt.subplots()
-    sns.histplot(df["medv"], kde=True, ax=ax2)
-    st.pyplot(fig2)
-
-    st.subheader("Missing Values & Duplicates")
-    st.write("Missing Values:")
-    st.write(df.isnull().sum())
-    st.write("Duplicates:", df.duplicated().sum())
-
-# Model Training
-elif section == "Model Training":
-    st.title("Model Training & Evaluation")
-
-    results = {}
-    for name, model in models.items():
-        model.fit(X_train, y_train)
-        preds = model.predict(X_test)
-        results[name] = {
-            "R²": r2_score(y_test, preds),
-            "MAE": mean_absolute_error(y_test, preds),
-            "RMSE": np.sqrt(mean_squared_error(y_test, preds))
-        }
-
-    st.subheader("Performance Comparison")
-
-    col1, col2, col3 = st.columns(3)
-    best_model = max(results, key=lambda x: results[x]["R²"])
-    
-    col1.metric("Best Model", best_model)
-    col2.metric("Highest R²", f"{results[best_model]['R²']:.3f}")
-    col3.metric("Lowest RMSE", f"{results[best_model]['RMSE']:.2f}")
-
-    st.markdown("### Detailed Metrics")
-    result_df = pd.DataFrame(results).T.sort_values(by="R²", ascending=False)
-    st.dataframe(result_df.style.background_gradient(cmap='Greens'))
-
-# Prediction
-elif section == "Predict Price":
-    st.title("Predict House Price")
-
-    st.markdown("Fill the details below to predict house price.")
-
-    columns = df.columns[:-1]
-    user_input = []
-    for col in columns:
-        val = st.number_input(f"{col}", value=float(df[col].mean()), step=0.1)
-        user_input.append(val)
-
-    input_array = np.array(user_input).reshape(1, -1)
-    scaled_input = scaler.transform(input_array)
-
-    model_choice = st.selectbox("Choose a Model", list(models.keys()))
-    chosen_model = models[model_choice]
-    chosen_model.fit(X_train, y_train)
-    pred = chosen_model.predict(scaled_input)
-
-    st.success(f"Predicted House Price (medv): ${pred[0]:.2f}")
+# Predict
+if st.button("📊 Predict House Price"):
+    prediction = model.predict(X_scaled)[0]
+    st.success(f"💰 Estimated Median House Price: **${prediction * 1000:,.2f}**")
 
     st.markdown("---")
-    st.info("Note: medv is in $1000s.")
+    st.markdown("✅ This prediction is based on advanced regression using the **Random Forest/XGBoost model** trained on the Boston Housing dataset with engineered features for improved accuracy.")
+
+# Footer
+st.markdown("---")
+st.markdown("🧠 Created with love by Harini & Team • Streamlit Deployment • 2025")
 
