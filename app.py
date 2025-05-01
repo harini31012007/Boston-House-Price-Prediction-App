@@ -12,11 +12,11 @@ from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Set page config
-st.set_page_config(page_title="🏡 Boston House Price Predictor", layout="wide")
+st.set_page_config(page_title="Boston House Price Predictor", layout="wide")
 
 # Sidebar
-st.sidebar.title("🔎 Navigation")
-section = st.sidebar.radio("Go to", ["🏠 Introduction", "📊 Data Exploration", "🧠 Model Training", "📈 Predict Price"])
+st.sidebar.title("Navigation")
+section = st.sidebar.radio("Go to", ["Introduction", "Data Exploration", "Model Training", "Predict Price"])
 
 # Load dataset
 @st.cache_data
@@ -43,12 +43,12 @@ models = {
 }
 
 # Introduction
-if section == "🏠 Introduction":
-    st.title("🏡 Boston House Price Prediction App")
+if section == "Introduction":
+    st.title("Boston House Price Prediction App")
     st.markdown("""
     Welcome! This app predicts Boston house prices using smart regression techniques.
     
-    ### 💡 Models included:
+    ### Models included:
     - Linear Regression
     - Ridge & Lasso Regression
     - Random Forest
@@ -59,29 +59,29 @@ if section == "🏠 Introduction":
     st.image("https://miro.medium.com/v2/resize:fit:1400/format:webp/1*RBPVDn3S1sauz1MyoN7Hug.jpeg", use_column_width=True)
 
 # Data Exploration
-elif section == "📊 Data Exploration":
-    st.title("📊 Exploratory Data Analysis")
+elif section == "Data Exploration":
+    st.title("Exploratory Data Analysis")
     st.subheader("Dataset Preview")
     st.dataframe(df.head())
 
-    st.subheader("📌 Correlation Matrix")
+    st.subheader("Correlation Matrix")
     fig, ax = plt.subplots(figsize=(12, 10))
     sns.heatmap(df.corr(), annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
     st.pyplot(fig)
 
-    st.subheader("🎯 Distribution of Target Variable (medv)")
+    st.subheader("Distribution of Target Variable (medv)")
     fig2, ax2 = plt.subplots()
     sns.histplot(df["medv"], kde=True, ax=ax2)
     st.pyplot(fig2)
 
-    st.subheader("🧼 Missing Values & Duplicates")
+    st.subheader("Missing Values & Duplicates")
     st.write("Missing Values:")
     st.write(df.isnull().sum())
     st.write("Duplicates:", df.duplicated().sum())
 
 # Model Training
-elif section == "🧠 Model Training":
-    st.title("🧠 Model Training & Evaluation")
+elif section == "Model Training":
+    st.title("Model Training & Evaluation")
 
     results = {}
     for name, model in models.items():
@@ -93,7 +93,7 @@ elif section == "🧠 Model Training":
             "RMSE": np.sqrt(mean_squared_error(y_test, preds))
         }
 
-    st.subheader("📊 Performance Comparison")
+    st.subheader("Performance Comparison")
 
     col1, col2, col3 = st.columns(3)
     best_model = max(results, key=lambda x: results[x]["R²"])
@@ -102,16 +102,16 @@ elif section == "🧠 Model Training":
     col2.metric("Highest R²", f"{results[best_model]['R²']:.3f}")
     col3.metric("Lowest RMSE", f"{results[best_model]['RMSE']:.2f}")
 
-    st.markdown("### 📋 Detailed Metrics")
+    st.markdown("###Detailed Metrics")
     result_df = pd.DataFrame(results).T.sort_values(by="R²", ascending=False)
     st.dataframe(result_df.style.background_gradient(cmap='Greens'))
 
 # Prediction
-elif section == "📈 Predict Price":
-    st.title("📈 Predict Boston House Price")
+elif section == "Predict Price":
+    st.title("Predict Boston House Price")
 
     st.markdown("""
-    ### 📝 Enter House Features
+    ### Enter House Features
     Provide values for each feature to get a predicted house price.  
     *(Note: All features are numeric. `medv` is the target variable and is excluded.)*
     """)
