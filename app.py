@@ -56,7 +56,11 @@ if section == "Introduction":
 
     Use the sidebar to explore the dataset, train models, and make predictions!
     """)
-st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Boston_Skyline.jpg/1200px-Boston_Skyline.jpg", use_column_width=True)
+    st.image(
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Boston_Skyline.jpg/1200px-Boston_Skyline.jpg",
+        use_column_width=True
+    )
+
 # Data Exploration
 elif section == "Data Exploration":
     st.title("Exploratory Data Analysis")
@@ -101,7 +105,7 @@ elif section == "Model Training":
     col2.metric("Highest R²", f"{results[best_model]['R²']:.3f}")
     col3.metric("Lowest RMSE", f"{results[best_model]['RMSE']:.2f}")
 
-    st.markdown("###Detailed Metrics")
+    st.markdown("### Detailed Metrics")
     result_df = pd.DataFrame(results).T.sort_values(by="R²", ascending=False)
     st.dataframe(result_df.style.background_gradient(cmap='Greens'))
 
