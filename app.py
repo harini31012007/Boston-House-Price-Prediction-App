@@ -80,7 +80,7 @@ X_input = input_data[final_features]
 def load_model():
     # Load the scaler and model (must be saved beforehand)
     scaler = pickle.load(open("scaler.pkl", "rb"))
-    model = pickle.load(open("final_model.pkl", "rb"))
+    model = pickle.load(open("model.pkl", "rb"))
     return scaler, model
 
 scaler, model = load_model()
