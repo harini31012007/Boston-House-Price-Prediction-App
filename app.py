@@ -56,7 +56,8 @@ if section == "Introduction":
 
     Use the sidebar to explore the dataset, train models, and make predictions!
     """)
-    st.image("https://miro.medium.com/v2/resize:fit:1400/format:webp/1*RBPVDn3S1sauz1MyoN7Hug.jpeg", use_column_width=True)
+   st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Boston_Skyline.jpg/1200px-Boston_Skyline.jpg", use_column_width=True)
+)
 
 # Data Exploration
 elif section == "Data Exploration":
