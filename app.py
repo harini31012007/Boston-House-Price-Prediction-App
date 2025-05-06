@@ -7,17 +7,16 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
-# Optional LightGBM import
 try:
     from lightgbm import LGBMRegressor
     lightgbm_available = True
 except ImportError:
     lightgbm_available = False
 
-# Streamlit page settings
+# Page Config
 st.set_page_config(page_title="Boston House Price Predictor", layout="wide")
 
-# Load and cache dataset
+# Load dataset
 @st.cache_data
 def load_data():
     url = 'https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv'
@@ -32,7 +31,7 @@ y = df['medv']
 X_scaled = scaler.fit_transform(X)
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Regression Models
+# Define models
 models = {
     "Linear Regression": LinearRegression(),
     "Ridge Regression": Ridge(),
@@ -40,40 +39,41 @@ models = {
     "Random Forest": RandomForestRegressor(n_estimators=100),
     "XGBoost": XGBRegressor(n_estimators=100, learning_rate=0.1)
 }
+
 if lightgbm_available:
     models["LightGBM"] = LGBMRegressor(n_estimators=100, learning_rate=0.1)
 
-# Title
-st.title("🏠 Boston House Price Predictor")
+# UI — Prediction Interface
+st.title(" Boston House Price Prediction")
 
 st.markdown("""
-Fill in the house details below, select a prediction model,  
-and click **Predict Price** to estimate the house's value (in $1000s).
+Customize the values of the input features below, select your preferred regression model,  
+and click **Predict** to estimate the house price (in $1000s).
 """)
 
-# User Input
+# Input Form
 with st.form("predict_form"):
     col1, col2 = st.columns(2)
     with col1:
-        crim = st.number_input("Crime Rate (per capita)", value=0.1)
-        zn = st.number_input("Zoned Land (%) for Large Homes", value=0.0)
-        indus = st.number_input("Industrial Area (acres)", value=7.0)
-        chas = st.selectbox("Near Charles River?", options=[0, 1], help="0 = No, 1 = Yes")
-        nox = st.number_input("Air Pollution (NOx level)", value=0.5)
-        rm = st.number_input("Avg. Rooms per House", value=6.0)
-        age = st.number_input("Old Houses (%)", value=65.0)
+        crim = st.number_input("CRIM: Per capita crime rate", value=0.1)
+        zn = st.number_input("ZN: Residential land zoned", value=0.0)
+        indus = st.number_input("INDUS: Non-retail business acres", value=7.0)
+        chas = st.selectbox("CHAS: Bounds Charles River", options=[0, 1])
+        nox = st.number_input("NOX: Nitric oxide (ppm)", value=0.5)
+        rm = st.number_input("RM: Avg rooms per dwelling", value=6.0)
+        age = st.number_input("AGE: % built before 1940", value=65.0)
     with col2:
-        dis = st.number_input("Distance to Employment Centers", value=4.0)
-        rad = st.number_input("Highway Access Index", value=1.0)
-        tax = st.number_input("Property Tax Rate", value=300.0)
-        ptratio = st.number_input("Student-Teacher Ratio", value=18.0)
-        b = st.number_input("Ethnicity Indicator (B)", value=396.9)
-        lstat = st.number_input("Low-Income Population (%)", value=12.0)
+        dis = st.number_input("DIS: Distance to jobs", value=4.0)
+        rad = st.number_input("RAD: Access to radial highways", value=1.0)
+        tax = st.number_input("TAX: Property tax rate", value=300.0)
+        ptratio = st.number_input("PTRATIO: Pupil-teacher ratio", value=18.0)
+        b = st.number_input("B: 1000(Bk - 0.63)^2", value=396.9)
+        lstat = st.number_input("LSTAT: % lower status population", value=12.0)
 
-    model_choice = st.selectbox("🔍 Choose a Prediction Model", list(models.keys()))
-    submit = st.form_submit_button("🚀 Predict Price")
+    model_choice = st.selectbox("Choose Regression Model", list(models.keys()))
+    submit = st.form_submit_button(" Predict Price")
 
-# Prediction logic
+# Prediction
 if submit:
     user_input = np.array([crim, zn, indus, chas, nox, rm, age,
                            dis, rad, tax, ptratio, b, lstat]).reshape(1, -1)
@@ -81,7 +81,7 @@ if submit:
 
     model = models[model_choice]
     model.fit(X_train, y_train)
-    prediction = model.predict(scaled_input)
+    pred = model.predict(scaled_input)
 
-    st.success(f"🏷️ Estimated House Price: **${prediction[0]:.2f}k USD**")
-    st.caption("This price is predicted using the selected machine learning model.")
+    st.success(f" Predicted House Price: **${pred[0]:.2f}k USD**")
+    st.caption("Estimated using scaled inputs and selected model.")
