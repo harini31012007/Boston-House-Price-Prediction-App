@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
-# Optional: LightGBM fallback-safe
+
 try:
     from lightgbm import LGBMRegressor
     lightgbm_available = True
@@ -45,7 +45,7 @@ if lightgbm_available:
     models["LightGBM"] = LGBMRegressor(n_estimators=100, learning_rate=0.1)
 
 # UI — Prediction Interface
-st.title("🏠 Boston House Price Prediction")
+st.title(" Boston House Price Prediction")
 
 st.markdown("""
 Customize the values of the input features below, select your preferred regression model,  
@@ -71,8 +71,8 @@ with st.form("predict_form"):
         b = st.number_input("B: 1000(Bk - 0.63)^2", value=396.9)
         lstat = st.number_input("LSTAT: % lower status population", value=12.0)
 
-    model_choice = st.selectbox("📊 Choose Regression Model", list(models.keys()))
-    submit = st.form_submit_button("🚀 Predict Price")
+    model_choice = st.selectbox(" Choose Regression Model", list(models.keys()))
+    submit = st.form_submit_button(" Predict Price")
 
 # Prediction
 if submit:
@@ -84,5 +84,5 @@ if submit:
     model.fit(X_train, y_train)
     pred = model.predict(scaled_input)
 
-    st.success(f"💰 Predicted House Price: **${pred[0]:.2f}k USD**")
+    st.success(f" Predicted House Price: **${pred[0]:.2f}k USD**")
     st.caption("Estimated using scaled inputs and selected model.")
